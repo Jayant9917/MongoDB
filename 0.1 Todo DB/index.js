@@ -1,10 +1,11 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const JWT_SECRET = "s3cret";
-mongoose.connect("mongodb+srv://gasfgfafa:Aa5jxKhylWdFhv4v@cluster0.7kmvq.mongodb.net/todo-app")
-
-const { auth, JWT_SECRET } = require("./auth");
+const jwt = require("jsonwebtoken");
 const { UserModel, TodoModel } = require("./db");
+const { auth, JWT_SECRET } = require("./auth");
+
+
+mongoose.connect("mongodb+srv://admin:jayant132465rana@cluster0.cty7ree.mongodb.net/Todo-app-database");
 
 
 const app = express();
@@ -22,6 +23,7 @@ app.post("/signup", async function(req, res) {
         name: name
     });
     
+    
     res.json({
         message: "You are signed up"
     })
@@ -36,11 +38,12 @@ app.post("/signin", async function(req, res) {
         email: email,
         password: password,
     });
+    console.log(response);
 
     if (response) {
         const token = jwt.sign({
             id: response._id.toString()
-        })
+        }, JWT_SECRET)
 
         res.json({
             token
@@ -50,16 +53,37 @@ app.post("/signin", async function(req, res) {
             message: "Incorrect creds"
         })
     }
+    
 });
 
 
-app.post("/todo", function(req, res) {
+app.post("/todo", async function(req, res) {
+    const userId = req.userId;
+    const title = req.body.title;
+    const done = req.body.done;
 
+    await TodoModel.create({
+        userId,
+        title,
+        done
+    });
+
+    res.json({
+        message: "Todo created"
+    })
 });
 
 
-app.get("/todos", function(req, res) {
+app.get("/todos", async function(req, res) {
+    const userId = req.userId;
 
+    const todos = await TodoModel.find({
+        userId
+    });
+
+    res.json({
+        todos
+    })
 });
 
 app.listen(port, () => {
